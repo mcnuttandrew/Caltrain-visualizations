@@ -12,15 +12,31 @@ Trains.loadData = function(){
   });
 };
 
-var generatePathFromIndices = function(stopList, name){
+var generatePathFromIndices = function(stopList, buckets, name){
   var directions = "M 50 20";
-  stopList[name].forEach(function(stopIndex){
-    var xDir = 50;
+  stopList[name].forEach(function(stopIndex, i){
+    var letter = i === 0 ? 'M ' : ' L ';
+    var xDir = buckets[stopIndex] * 5;
     var yDir = stopIndex * 32 + 20;
-    directions = directions + " L " + xDir + ' ' + yDir;
+    directions = directions + letter + xDir + ' ' + yDir;
   });
 
   return directions;
+};
+
+var generateBucketsForNodes = function(stopList){
+  var buckets = {0: [], 1: [], 2: []};
+  var stopsCounts = {};
+  Object.keys(stopList).forEach(function(name){
+    stopList[name].forEach(function(index){
+      if(!stopsCounts[index]){
+        stopsCounts[index] = 1;
+      } else {
+        stopsCounts[index] += 1;
+      }
+    });
+  });
+  return stopsCounts;
 };
 
 var nodeGraphic = function(){
@@ -40,9 +56,11 @@ var nodeGraphic = function(){
   trainNames.forEach(function(name){
     stopList[name] = Trains.times[name]
                      .filter(function(el){
-                       return el[1].length > 0 && el[1] !== "  —";
+                       return el[1].length > 0 && !el[1].match(/\s\s\S/);
                      }).map(function(el){return el[0];});
   });
+
+  var buckets = generateBucketsForNodes(stopList);
 
   var svg = d3.select('#visualizationContainer').append('svg')
               .attr('height', height).attr('width', width)
@@ -51,19 +69,7 @@ var nodeGraphic = function(){
 
 
   return function update(){
-    //JOIN
-    var stopNodes = svg.selectAll('circle.stop').data(stops);
-    //ENTER
-    stopNodes.enter().append('circle').attr('class', 'stop')
-            .attr('cx', 50).attr('cy', 20).attr('r', 10)
-            .attr('fill', 'none').attr('stroke', 'black');
-    //ENTER + update
-    stopNodes.transition().duration(700)
-            .attr('cy', function(d){
-              return d.stopIndex * 32 + 20;
-            });
-    //EXIT
-    stopNodes.exit().remove();
+
 
 
 
@@ -76,6 +82,9 @@ var nodeGraphic = function(){
             .text(function(d){return d.stopName;});
     //ENTER + update
     nodeLabels.transition().duration(700)
+            .attr('x', function(d){
+              return buckets[d.stopIndex] * 5 + 15;
+            })
             .attr('y', function(d){
               return d.stopIndex * 32 + 25;
             });
@@ -86,12 +95,42 @@ var nodeGraphic = function(){
     var trainLines = svg.selectAll('path.route').data(trainNames);
     // ENTER
     trainLines.enter().append('path').attr('class', 'route')
-              .attr('d', generatePathFromIndices.bind(this, stopList))
-              .attr('stroke', 'black');
-    trainLines.transition().duration(700).attr('stroke-width', 3);
+              .attr('d', generatePathFromIndices.bind(this, stopList, buckets))
+              .attr('stroke', function(d){
+                var color;
+                switch(d.split('')[0]) {
+                  case '1': // local
+                    color = 'black';
+                    break;
+                  // case '2': // limited
+                  //   color = 'yellow';
+                  //   break;
+                  case '3': // bullet
+                    color = 'red';
+                    break;
+                }
+                return color;
+              });
+    trainLines.transition().duration(700).attr('stroke-width', 1)
+              .attr('fill', 'none');
     trainLines.exit().remove();
 
-
+    //JOIN
+    var stopNodes = svg.selectAll('circle.stop').data(stops);
+    //ENTER
+    stopNodes.enter().append('circle').attr('class', 'stop')
+            .attr('cx', 50).attr('cy', 20).attr('r', 10)
+            .attr('fill', 'white').attr('stroke', 'black');
+    //ENTER + update
+    stopNodes.transition().duration(700)
+            .attr('cx', function(d){
+              return buckets[d.stopIndex] * 5;
+            })
+            .attr('cy', function(d){
+              return d.stopIndex * 32 + 20;
+            });
+    //EXIT
+    stopNodes.exit().remove();
   };
 };
 
