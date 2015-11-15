@@ -12,12 +12,12 @@ Trains.loadData = function(){
   });
 };
 
-var generatePathFromIndices = function(stopList, buckets, name){
+var generatePathFromIndices = function(stopList, buckets, x, y, name){
   var directions = "M 50 20";
   stopList[name].forEach(function(stopIndex, i){
     var letter = i === 0 ? 'M ' : ' L ';
-    var xDir = buckets[stopIndex] * 5;
-    var yDir = stopIndex * 32 + 20;
+    var xDir = x(buckets[stopIndex]);
+    var yDir = y(stopIndex) + 20;
     directions = directions + letter + xDir + ' ' + yDir;
   });
 
@@ -40,9 +40,9 @@ var generateBucketsForNodes = function(stopList){
 };
 
 var nodeGraphic = function(){
-  var height = 2000;
-  var width = 2000;
-  var margin = {left: 0, right: 0, top: 0, bottom: 0};
+  var height = 1000;
+  var width = 800;
+  var margin = {left: 50, right: 200, top: 0, bottom: 200};
   var plotWidth = width - margin.left - margin.right;
   var plotHeight = height - margin.top - margin.bottom;
 
@@ -61,7 +61,10 @@ var nodeGraphic = function(){
   });
 
   var buckets = generateBucketsForNodes(stopList);
+  var xDomain = d3.extent(Object.keys(buckets).map(function(el){return buckets[el];}));
+  var x = d3.scale.linear().domain(xDomain).range([0, plotWidth]);
 
+  var y = d3.scale.linear().domain([0, 28]).range([0, plotHeight]);
   var svg = d3.select('#visualizationContainer').append('svg')
               .attr('height', height).attr('width', width)
               .append("g")
@@ -69,7 +72,6 @@ var nodeGraphic = function(){
 
 
   return function update(){
-
 
 
 
@@ -83,10 +85,10 @@ var nodeGraphic = function(){
     //ENTER + update
     nodeLabels.transition().duration(700)
             .attr('x', function(d){
-              return buckets[d.stopIndex] * 5 + 15;
+              return x(buckets[d.stopIndex]) + 15;
             })
             .attr('y', function(d){
-              return d.stopIndex * 32 + 25;
+              return y(d.stopIndex) + 25;
             });
     //EXIT
     nodeLabels.exit().remove();
@@ -95,7 +97,7 @@ var nodeGraphic = function(){
     var trainLines = svg.selectAll('path.route').data(trainNames);
     // ENTER
     trainLines.enter().append('path').attr('class', 'route')
-              .attr('d', generatePathFromIndices.bind(this, stopList, buckets))
+              .attr('d', generatePathFromIndices.bind(this, stopList, buckets, x, y))
               .attr('stroke', function(d){
                 var color;
                 switch(d.split('')[0]) {
@@ -124,10 +126,10 @@ var nodeGraphic = function(){
     //ENTER + update
     stopNodes.transition().duration(700)
             .attr('cx', function(d){
-              return buckets[d.stopIndex] * 5;
+              return x(buckets[d.stopIndex]);
             })
             .attr('cy', function(d){
-              return d.stopIndex * 32 + 20;
+              return y(d.stopIndex) + 20;
             });
     //EXIT
     stopNodes.exit().remove();
