@@ -1,19 +1,5 @@
-.axis path,
+/*.axis path,
 .axis line{
   fill: none;
   stroke: black;
-}
-
-.line{
-  fill: none;
-  stroke: blue;
-  stroke-width: 2px;
-}
-
-.tick text{
-  font-size: 0;
-}
-
-.tick line{
-  opacity: 0.2;
-}
+}*/

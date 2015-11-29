@@ -52,6 +52,7 @@ var nodeGraphic = function(){
   var xAxis = d3.svg.axis().scale(x).tickSize(-plotHeight).orient('bottom')
                           .innerTickSize(plotHeight + 25)
                           .outerTickSize(0);
+
   var yAxis = d3.svg.axis().scale(y).orient('left')
                             .innerTickSize(-plotWidth)
                             .outerTickSize(0)
@@ -70,11 +71,22 @@ var nodeGraphic = function(){
     svg.append('g')
         .attr('class', 'x axis')
         .attr('transform', 'translate(0,' + 0 + ')')
-        .call(xAxis);
+        .call(xAxis)
+        .attr('font-size', 0)
+        .attr('opacity', 0.2)
+        .attr('fill', 'none')
+        .attr('stroke', 'black')
+        .attr('stroke-width', '2px');
+
     svg.append('g')
         .attr('class', 'y axis')
         .attr('transform', 'translate(' + 0 + ',' + margin.top / 2 + ')')
-        .call(yAxis);
+        .call(yAxis)
+        .attr('font-size', 0)
+        .attr('opacity', 0.2)
+        .attr('fill', 'none')
+        .attr('stroke', 'black')
+        .attr('stroke-width', '2px');
 
     //JOIN
     var nodeLabels = svg.selectAll('text.stopName').data(stops);
